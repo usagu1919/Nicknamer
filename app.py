@@ -5,18 +5,10 @@ st.title("異名診断メーカー")
 
 # ===== 修飾語リスト =====
 modifiers = {
-    "狂気": [
-        "を吐き出す", "を刻む", "を呪う", "を孕む", "に取り憑かれた", "を抱く", "を纏う", "を見下ろす"
-    ],
-    "ゆるふわ": [
-        "を包む", "と踊る", "に寄り添う", "を愛する", "に微笑む", "を散らす", "を香らせる", "と歌う"
-    ],
-    "現実的": [
-        "を操る", "を極めた", "を統べる", "を駆使する", "を支配する", "を制御する", "を分析する", "を突破する"
-    ],
-    "ファンタジー": [
-        "を宿す", "を継ぐ", "を纏いし", "を超越せし", "を解き放つ", "を背負う", "に選ばれし", "を召喚する"
-    ]
+    "狂気": ["を吐き出す", "を刻む", "を呪う", "を孕む", "に取り憑かれた", "を抱く", "を纏う", "を見下ろす"],
+    "ゆるふわ": ["を包む", "と踊る", "に寄り添う", "を愛する", "に微笑む", "を散らす", "を香らせる", "と歌う"],
+    "現実的": ["を操る", "を極めた", "を統べる", "を駆使する", "を支配する", "を制御する", "を分析する", "を突破する"],
+    "ファンタジー": ["を宿す", "を継ぐ", "を纏いし", "を超越せし", "を解き放つ", "を背負う", "に選ばれし", "を召喚する"]
 }
 
 # ===== 質問プール =====
@@ -67,26 +59,51 @@ titles = {
     "ファンタジー": ["竜を継ぐ者", "永遠の旅人", "天空の使者", "封印を解く者"]
 }
 
-# ===== メイン処理 =====
-st.subheader("ジャンルを選んでください")
-genre = st.selectbox("ジャンル", ["狂気", "ゆるふわ", "現実的", "ファンタジー"])
+# ===== セッション管理 =====
+if "stage" not in st.session_state:
+    st.session_state.stage = "start"
+if "genre" not in st.session_state:
+    st.session_state.genre = None
+if "selected_questions" not in st.session_state:
+    st.session_state.selected_questions = []
+if "answers" not in st.session_state:
+    st.session_state.answers = {}
 
-if st.button("診断スタート"):
-    st.write(f"ジャンル: {genre}")
+# ===== スタート画面 =====
+if st.session_state.stage == "start":
+    genre = st.selectbox("ジャンルを選んでください", ["狂気", "ゆるふわ", "現実的", "ファンタジー"])
+    if st.button("診断スタート"):
+        st.session_state.genre = genre
+        st.session_state.selected_questions = random.sample(
+            questions[genre], k=random.randint(4, 5)
+        )
+        st.session_state.stage = "questions"
+        st.rerun()
 
-    # 質問を4～5問ランダムに選ぶ
-    selected_questions = random.sample(questions[genre], k=random.randint(4, 5))
-    answers = []
-
-    for q, options in selected_questions:
-        ans = st.radio(q, options, key=q)
-        answers.append(ans)
-
+# ===== 質問画面 =====
+elif st.session_state.stage == "questions":
+    st.write(f"ジャンル: {st.session_state.genre}")
+    for idx, (q, options) in enumerate(st.session_state.selected_questions):
+        st.session_state.answers[idx] = st.radio(
+            q, options, key=f"q{idx}"
+        )
     if st.button("診断結果を見る"):
-        core = random.choice(answers)               # 回答のひとつをコアワードに
-        modifier = random.choice(modifiers[genre])  # 修飾語
-        prefix = random.choice(["終焉の", "零の", "奈落の", "反響する", "暁の", "永遠の"])
-        title = random.choice(titles[genre])        # 称号
+        st.session_state.stage = "result"
+        st.rerun()
 
-        result = f"**{prefix}{core}{modifier}{title}**"
-        st.success(f"あなたの異名は… {result}")
+# ===== 結果画面 =====
+elif st.session_state.stage == "result":
+    genre = st.session_state.genre
+    answers = list(st.session_state.answers.values())
+    core = random.choice(answers)
+    modifier = random.choice(modifiers[genre])
+    prefix = random.choice(["終焉の", "零の", "奈落の", "反響する", "暁の", "永遠の"])
+    title = random.choice(titles[genre])
+
+    result = f"**{prefix}{core}{modifier}{title}**"
+    st.success(f"あなたの異名は… {result}")
+
+    if st.button("もう一度診断する"):
+        st.session_state.stage = "start"
+        st.session_state.answers = {}
+        st.rerun()
