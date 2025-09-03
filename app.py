@@ -1,149 +1,148 @@
 import streamlit as st
 import random
 
-st.title("異名診断メーカー")
+# ===============================
+# 回答カテゴリ仕分け
+# ===============================
+answer_categories = {
+    # 狂気ジャンル
+    "無限に続く階段": "noun",
+    "燃え盛る檻": "noun",
+    "血に濡れた書記": "noun",
+    "虚ろな鏡": "noun",
+    "壊す": "verb",
+    "眠レ": "command",
+    "還レ": "command",
+    "叫ベ": "command",
 
-# ===== 修飾語リスト =====
-modifiers = {
-    "狂気": ["を吐き出す", "を刻む", "を呪う", "を孕む", "に取り憑かれた", "を抱く", "を纏う", "を見下ろす"],
-    "ゆるふわ": ["を包む", "と踊る", "に寄り添う", "を愛する", "に微笑む", "を散らす", "を香らせる", "と歌う"],
-    "現実的": ["を操る", "を極めた", "を統べる", "を駆使する", "を支配する", "を制御する", "を分析する", "を突破する"],
-    "ファンタジー": ["を宿す", "を継ぐ", "を纏いし", "を超越せし", "を解き放つ", "を背負う", "に選ばれし", "を召喚する"]
+    # ゆるふわジャンル
+    "ひなたぼっこの縁側": "noun",
+    "虹をかける子": "noun",
+    "お菓子の夢": "noun",
+    "雲のベッド": "noun",
+    "笑う": "verb",
+    "遊ぶ": "verb",
+    "眠る": "verb",
+    "歌う": "verb",
+
+    # 現実的ジャンル
+    "社会": "noun",
+    "歴史": "noun",
+    "科学": "noun",
+    "経済": "noun",
+    "戦う": "verb",
+    "働く": "verb",
+    "考える": "verb",
+    "学ぶ": "verb",
+
+    # ファンタジージャンル
+    "古の剣": "noun",
+    "失われた王国": "noun",
+    "聖なる光": "noun",
+    "漆黒の翼": "noun",
+    "探す": "verb",
+    "導く": "verb",
+    "願う": "verb",
+    "救う": "verb",
 }
 
-# ===== 質問プール =====
-questions = {
-    "狂気": [
-        ("あなたの夢に繰り返し現れるものは？", ["燃え盛る檻", "無限に続く階段", "溶ける時計", "歪んだ鏡"]),
-        ("世界の音がすべて一つに溶けたとき、あなたは何を聞いた？", ["血の鼓動", "無音", "囁き声", "金属音"]),
-        ("闇に浮かぶ一つの瞳。その色は？", ["深紅", "蒼白", "金色", "真っ黒"]),
-        ("禁じられた書物を開いたとき最初に見た言葉は？", ["断絶", "再生", "螺旋", "解体"]),
-        ("最期に残す言葉を刻めるとしたら？", ["壊セ", "眠レ", "笑エ", "還レ"]),
-        ("あなたの肉体に刻まれている紋様は？", ["裂けた口", "螺旋の印", "千の目", "黒い翼"]),
-        ("崩壊する世界であなたが守るものは？", ["誰もいない椅子", "割れた人形", "名前のない墓", "叫ぶ影"])
-    ],
-    "ゆるふわ": [
-        ("あなたが一番落ち着く場所は？", ["ひなたぼっこの縁側", "ふわふわの草原", "絵本の図書館", "虹色のカフェ"]),
-        ("あなたを一言で表すと？", ["もふもふ", "ほわほわ", "きらきら", "ゆらゆら"]),
-        ("小さな魔法が使えるなら何をする？", ["花を咲かせる", "動物と話す", "空に絵を描く", "お菓子を出す"]),
-        ("空から降ってきてほしいものは？", ["花びら", "星屑", "シャボン玉", "綿あめ"]),
-        ("あなたの隣にいつもいるものは？", ["小鳥", "ぬいぐるみ", "妖精", "優しい風"]),
-        ("好きな音は？", ["鈴の音", "波の音", "風の音", "子守唄"]),
-        ("眠りにつく前に見る景色は？", ["満月", "お花畑", "暖炉の火", "雲の上"])
-    ],
-    "現実的": [
-        ("あなたが最も誇れるスキルは？", ["計算力", "記憶力", "分析力", "交渉力"]),
-        ("日々を支える最大の道具は？", ["パソコン", "手帳", "ペン", "時計"]),
-        ("人生のモットーは？", ["効率", "努力", "挑戦", "安定"]),
-        ("最も頼りになるものは？", ["知識", "経験", "人脈", "体力"]),
-        ("未来を切り開く鍵は？", ["情報", "金", "信頼", "技術"]),
-        ("勝負の瞬間、あなたが頼るものは？", ["論理", "直感", "準備", "運"]),
-        ("壁を前にしたときのあなたの選択は？", ["壊す", "回り込む", "登る", "諦めない"])
-    ],
-    "ファンタジー": [
-        ("あなたが生まれたのはどの地？", ["天空の城", "深淵の洞窟", "古代の森", "砂漠の遺跡"]),
-        ("あなたに宿る力は？", ["炎", "氷", "雷", "影"]),
-        ("契約した存在は？", ["龍", "精霊", "魔王", "古代の神"]),
-        ("あなたの武器は？", ["剣", "杖", "弓", "槍"]),
-        ("背負っている運命は？", ["滅亡", "再生", "永遠", "選ばれし者"]),
-        ("旅の目的は？", ["復讐", "探索", "解放", "守護"]),
-        ("あなたの名が語られる場所は？", ["伝説の書", "神殿の壁画", "吟遊詩人の歌", "夢の中"])
-    ]
+# ===============================
+# 修飾語カテゴリ
+# ===============================
+modifier_categories = {
+    "noun": ["を操る", "を抱く", "を纏う", "を司る", "を感じる"],
+    "verb": ["ことを望む", "を繰り返す", "者", "ことを夢見る"],
+    "command": ["に囚われし", "を残す", "に導かれた", "に抗う"]
 }
 
-# ===== 称号リスト =====
+# ===============================
+# 異名用タイトル
+# ===============================
 titles = {
-    "狂気": ["千本足の母", "門を叩く者", "声なき王", "血に濡れた書記"],
-    "ゆるふわ": ["もふもふの守護者", "お昼寝の女王", "お菓子職人の妖精", "虹をかける子"],
-    "現実的": ["理論の支配者", "現実の設計者", "計画の番人", "社会を統べる者"],
-    "ファンタジー": ["竜を継ぐ者", "永遠の旅人", "天空の使者", "封印を解く者"]
+    "狂気": ["門を叩く者", "血に濡れた書記", "声なき王"],
+    "ゆるふわ": ["虹をかける子", "森で眠る精霊", "お菓子の使者"],
+    "現実的": ["社会を統べる者", "知識の探究者", "現実を歩む者"],
+    "ファンタジー": ["選ばれし勇者", "失われし継承者", "闇に抗う者"]
 }
 
-# ===== テンプレート =====
+# ===============================
+# テンプレート（ジャンル×カテゴリ）
+# ===============================
 templates = {
-    "狂気": [
-        "{prefix}{answer}{modifier}の{title}",
-        "{prefix}{modifier}{answer}を抱く{title}",
-        "{prefix}{answer}に囚われし{title}",
-        "{answer}{modifier}{title}",   # prefix省略型
-        "{prefix}{answer}{title}"      # modifier省略型
-    ],
-    "ゆるふわ": [
+    "noun": [
         "{prefix}{answer}{modifier}{title}",
-        "{prefix}{modifier}{answer}と遊ぶ{title}",
-        "{prefix}{answer}を愛する{title}",
-        "{answer}{modifier}{title}",   # prefix省略型
-        "{prefix}{answer}{title}"      # modifier省略型
+        "{prefix}{modifier}{answer}{title}"
     ],
-    "現実的": [
+    "verb": [
         "{prefix}{answer}{modifier}{title}",
-        "{prefix}{modifier}{answer}を駆使する{title}",
-        "{prefix}{answer}を極めし{title}",
-        "{answer}{modifier}{title}",   # prefix省略型
-        "{prefix}{answer}{title}"      # modifier省略型
+        "{prefix}{answer}{modifier}",
     ],
-    "ファンタジー": [
+    "command": [
         "{prefix}{answer}{modifier}{title}",
-        "{prefix}{modifier}{answer}を宿す{title}",
-        "{prefix}{answer}に選ばれし{title}",
-        "{answer}{modifier}{title}",   # prefix省略型
-        "{prefix}{answer}{title}"      # modifier省略型
+        "{prefix}{answer}{modifier}"
     ]
 }
 
-# ===== 短縮ルール =====
-def maybe_skip(value, chance=0.3):
-    if random.random() < chance:
-        return ""
-    return value
+# ===============================
+# ランダムでプレフィックス省略
+# ===============================
+def maybe_skip(text, prob=0.3):
+    return "" if random.random() < prob else text
 
-# ===== 異名生成関数 =====
+# ===============================
+# 名前生成
+# ===============================
 def generate_name(genre, answers):
     core = random.choice(answers)
-    modifier = random.choice(modifiers[genre])
-    prefix = maybe_skip(random.choice(["終焉の", "零の", "奈落の", "反響する", "暁の", "永遠の"]))
+    category = answer_categories.get(core, "noun")
+    modifier = random.choice(modifier_categories[category])
+
+    prefix = maybe_skip(random.choice(
+        ["終焉の", "零の", "奈落の", "反響する", "暁の", "永遠の"]
+    ))
+
     title = random.choice(titles[genre])
+    template = random.choice(templates[category])
 
-    template = random.choice(templates[genre])
     result = template.format(prefix=prefix, answer=core, modifier=modifier, title=title)
+    return result.replace("  ", " ").replace("のの", "の").strip()
 
-    # 不要な重複を修正
-    result = result.replace("  ", " ").replace("のの", "の").strip()
-    return result
+# ===============================
+# Streamlit UI
+# ===============================
+st.title("異名診断メーカー")
 
-# ===== セッション管理 =====
 if "stage" not in st.session_state:
-    st.session_state.stage = "start"
-if "genre" not in st.session_state:
+    st.session_state.stage = "genre"
     st.session_state.genre = None
-if "selected_questions" not in st.session_state:
-    st.session_state.selected_questions = []
-if "answers" not in st.session_state:
     st.session_state.answers = {}
 
-# ===== スタート画面 =====
-if st.session_state.stage == "start":
-    genre = st.selectbox("ジャンルを選んでください", ["狂気", "ゆるふわ", "現実的", "ファンタジー"])
+# --- ジャンル選択 ---
+if st.session_state.stage == "genre":
+    st.subheader("ジャンルを選んでください")
+    genre = st.radio("ジャンル", ["狂気", "ゆるふわ", "現実的", "ファンタジー"])
     if st.button("診断スタート"):
         st.session_state.genre = genre
-        st.session_state.selected_questions = random.sample(
-            questions[genre], k=random.randint(4, 5)
-        )
         st.session_state.stage = "questions"
-        st.rerun()
+        st.session_state.answers = {}
 
-# ===== 質問画面 =====
+# --- 質問パート ---
 elif st.session_state.stage == "questions":
-    st.write(f"ジャンル: {st.session_state.genre}")
-    for idx, (q, options) in enumerate(st.session_state.selected_questions):
-        st.session_state.answers[idx] = st.radio(
-            q, options, key=f"q{idx}"
-        )
+    st.subheader(f"ジャンル: {st.session_state.genre}")
+
+    # 仮の質問（将来的にはプールからランダム出題もOK）
+    questions = [
+        ("あなたを最も表すものは？", ["無限に続く階段", "燃え盛る檻", "血に濡れた書記", "虚ろな鏡", "壊す", "眠レ", "還レ", "叫ベ"]),
+    ]
+
+    for i, (q, options) in enumerate(questions):
+        answer = st.radio(q, options, key=f"q{i}")
+        st.session_state.answers[i] = answer
+
     if st.button("診断結果を見る"):
         st.session_state.stage = "result"
-        st.rerun()
 
-# ===== 結果画面 =====
+# --- 結果表示 ---
 elif st.session_state.stage == "result":
     genre = st.session_state.genre
     answers = list(st.session_state.answers.values())
@@ -152,6 +151,4 @@ elif st.session_state.stage == "result":
     st.success(f"あなたの異名は… {result}")
 
     if st.button("もう一度診断する"):
-        st.session_state.stage = "start"
-        st.session_state.answers = {}
-        st.rerun()
+        st.session_state.stage = "genre"
