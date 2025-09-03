@@ -91,16 +91,19 @@ elif st.session_state.stage == "questions":
         st.session_state.stage = "result"
         st.rerun()
 
-# ===== 結果画面 =====
+# ===== 結果画面 ====
+
 elif st.session_state.stage == "result":
     genre = st.session_state.genre
     answers = list(st.session_state.answers.values())
-    core = random.choice(answers)
+    core = random.choice(answers)        # ユーザー回答から1つ
     modifier = random.choice(modifiers[genre])
     prefix = random.choice(["終焉の", "零の", "奈落の", "反響する", "暁の", "永遠の"])
     title = random.choice(titles[genre])
 
-    result = f"**{prefix}{core}{modifier}{title}**"
+    template = random.choice(templates[genre])
+    result = template.format(prefix=prefix, answer=core, modifier=modifier, title=title)
+
     st.success(f"あなたの異名は… {result}")
 
     if st.button("もう一度診断する"):
