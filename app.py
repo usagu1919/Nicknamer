@@ -86,8 +86,8 @@ templates = {
         "{prefix}{answer}{modifier}",
         "{prefix}{answer}{modifier}{title}"
     ],
+    # command系は必ずtitleを付ける
     "command": [
-        "{prefix}{answer}{modifier}",
         "{prefix}{answer}{modifier}{title}"
     ]
 }
@@ -186,14 +186,14 @@ if "stage" not in st.session_state:
 # --- ジャンル選択 ---
 if st.session_state.stage == "genre":
     st.subheader("ジャンルを選んでください")
-    genre = st.radio("ジャンル", ["狂気", "ゆるふわ", "現実的", "ファンタジー"])
+    genre = st.radio("ジャンル", ["狂気", "ゆるふわ", "現実的", "ファンタジー"], key="genre_radio")
     if st.button("診断スタート"):
         st.session_state.genre = genre
-        # 出題数はランダムで4か5問
-        num_q = random.choice([4, 5])
+        num_q = random.choice([4, 5])  # 出題数はランダム
         st.session_state.questions = random.sample(question_pool[genre], num_q)
         st.session_state.stage = "questions"
         st.session_state.answers = {}
+        st.experimental_rerun()
 
 # --- 質問パート ---
 elif st.session_state.stage == "questions":
@@ -205,6 +205,7 @@ elif st.session_state.stage == "questions":
 
     if st.button("診断結果を見る"):
         st.session_state.stage = "result"
+        st.experimental_rerun()
 
 # --- 結果表示 ---
 elif st.session_state.stage == "result":
@@ -216,3 +217,4 @@ elif st.session_state.stage == "result":
 
     if st.button("もう一度診断する"):
         st.session_state.stage = "genre"
+        st.experimental_rerun()
